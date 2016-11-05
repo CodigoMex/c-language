@@ -3,6 +3,12 @@
 
 #define MAX_ITEMS 50
 
+enum STATE_QUEUE {
+    EMPTY,
+    HAS_DATA,
+    FULL
+};
+
 struct Item {
 	int value;
 	struct Item *next;
@@ -12,6 +18,7 @@ struct Queue {
 	struct Item *Head;
 	struct Item *Tail;
 	int size;
+    enum STATE_QUEUE state;
 };
 
 struct Queue* init_queue();

@@ -17,6 +17,7 @@ struct Queue *init_queue()
     queue->Head = NULL;
     queue->Tail = NULL;
     queue->size = 0;
+    queue->state = EMPTY;
 
     return queue;
 }
@@ -36,9 +37,8 @@ void free_queue(struct Queue *queue)
     item = queue->Head;
 
     while (queue->size >= 0) {
-        struct Item *item;
         item = dequeue(queue);
-        if (!item) {
+        if (item) {
             free(item);
             queue->size--;
         }
@@ -52,7 +52,8 @@ int enqueue(struct Queue *queue, int value)
         return -1;
     }
     // The queue is full
-    if (queue->size == MAX_ITEMS) {
+    if (queue->size == MAX_ITEMS || queue->state == FULL) {
+        queue->state = FULL;
         printf("Info: the queue is FULL\n");
         return -1;
     }
@@ -71,6 +72,8 @@ int enqueue(struct Queue *queue, int value)
         queue->Tail = item;
         queue->Head = item;
         queue->size++;
+        if (queue->state != HAS_DATA)
+            queue->state = HAS_DATA;
     }
     // The queue has space for more items
     else {
@@ -104,11 +107,13 @@ struct Item *dequeue(struct Queue *queue)
         queue->Head = NULL;
         queue->Tail = NULL;
         queue->size--;
+        queue->state = EMPTY;
     }
     // The queue has more than one item
     else {
         queue->Head = item->next;
         queue->size--;
+        queue->state = HAS_DATA;
     }
 
     return item;

@@ -1,5 +1,6 @@
 #include <CUnit/CUnit.h>
 #include <CUnit/Basic.h>
+#include <stdlib.h>
 #include "queue.h"
 
 int init_suite1(void)
@@ -18,6 +19,7 @@ static void __queue_test(struct Queue *queue)
     CU_ASSERT_PTR_NULL_FATAL(queue->Head);
     CU_ASSERT_PTR_NULL_FATAL(queue->Tail);
     CU_ASSERT_EQUAL_FATAL(queue->size, 0);
+    CU_ASSERT_EQUAL_FATAL(queue->state, EMPTY);
 }
 
 // Test the correctly initialization of the queue
@@ -77,6 +79,44 @@ static void test_enqueue_dequeue()
     free_queue(q);
 }
 
+// Test all the queue states
+static void test_queue_states()
+{
+    struct Queue *q;
+    struct Item *item;
+    int i;
+
+    q = init_queue();
+
+    for (i = 1; i <= MAX_ITEMS + 1; i++) {
+        enqueue(q, i);
+        if (i > MAX_ITEMS) {
+            CU_ASSERT_EQUAL_FATAL(q->state, FULL);
+            CU_ASSERT_EQUAL_FATAL(q->size, MAX_ITEMS);
+        } else {
+            CU_ASSERT_EQUAL_FATAL(q->state, HAS_DATA);
+            CU_ASSERT_EQUAL_FATAL(q->size, i);
+        }
+    }
+
+    for (i = MAX_ITEMS + 1; i >= 0; i--) {
+        item = dequeue(q);
+        if (q->size <= 0) {
+            CU_ASSERT_EQUAL_FATAL(q->state, EMPTY);
+            CU_ASSERT_EQUAL_FATAL(q->size, 0);
+        } else {
+            if (i > 0 && i < MAX_ITEMS) {
+                CU_ASSERT_EQUAL_FATAL(q->state, HAS_DATA);
+                int a = MAX_ITEMS - i;
+                CU_ASSERT_EQUAL_FATAL(q->size, i - 2);
+            }
+        }
+        if (item)
+            free(item);
+    }
+    free_queue(q);
+}
+
 int main()
 {
     CU_pSuite pSuite = NULL;
@@ -104,6 +144,8 @@ int main()
         || (NULL ==
             CU_add_test(pSuite, "test of enqueue() and dequeue()",
                         test_enqueue_dequeue))
+        || (NULL ==
+            CU_add_test(pSuite, "test of queue states", test_queue_states))
         ) {
         CU_cleanup_registry();
         return CU_get_error();
